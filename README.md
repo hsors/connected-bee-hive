@@ -1,5 +1,6 @@
 # ardbeescale-for-dummies
- 
+![photo - 1](https://user-images.githubusercontent.com/40210696/232249468-a80b5a2e-59b0-420f-b47d-cf51f5ccfbb2.jpeg)
+
 This repo includes the code of a a connected bee hive project together with a 65 pages document explaining the project in all details, including hardware and software 
 
 

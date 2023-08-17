@@ -66,7 +66,10 @@
 #include "hive-parameters.h"
 #include <OneWire.h> 
 #include <DallasTemperature.h>
+#include "Arduino.h"
+#include <WDTZero.h>
 
+WDTZero MyWatchDoggy; // Define WDT (watchdog timer)
 
 // init. BME280
 BME280 myBME280;
@@ -763,7 +766,7 @@ void onEvent(ev_t ev)
             }
 
             // HSO 09/02/2022 - once the downlink has been processed, put the controller in sleep mode
-            
+            MyWatchDoggy.setup(0);  // disable watchdog
             Serial.print(rtc.getHours());Serial.print(":");Serial.print(rtc.getMinutes());Serial.print(":");Serial.print(rtc.getSeconds());Serial.print(" - ");
             Serial.println("Now going to sleep...");
             digitalWrite(LED_BUILTIN,LOW); // make sure built-in LED is OFF
@@ -873,6 +876,8 @@ void processWork(ostime_t doWorkJobTimeStamp)
     // This is where the main work is performed like
     // reading sensor and GPS data and schedule uplink
     // messages if anything needs to be transmitted.
+
+    MyWatchDoggy.setup(WDT_SOFTCYCLE32S);  // initialize WDT-softcounter refesh cycle on 32sec interval
  
     // Skip processWork if using OTAA and still joining.
     if (LMIC.devaddr != 0)
@@ -1082,7 +1087,12 @@ void processDownlink(ostime_t txCompleteTimestamp, uint8_t fPort, uint8_t* data,
             Serial.print(rtc.getHours());Serial.print(":");Serial.print(rtc.getMinutes());Serial.print(":");Serial.print(rtc.getSeconds());Serial.print(" - ");
             serial.print("Switching the pump to ON for ");serial.print(pumpOnDuration);serial.println("s ");
             digitalWrite(GPIOPUMP, HIGH);
-            delay(1000*pumpOnDuration);
+            int splittedPumpDuration=pumpOnDuration/30; // the watchdog timer will cleared 30 times during pumping because pumping may last 630s
+            unsigned int t = 0;
+            for (t = 1; t < 30; ++t) {
+                delay(1000*splittedPumpDuration);
+                MyWatchDoggy.clear();
+                }
             digitalWrite(GPIOPUMP, LOW);
             Serial.print(rtc.getHours());Serial.print(":");Serial.print(rtc.getMinutes());Serial.print(":");Serial.print(rtc.getSeconds());Serial.print(" - ");
             serial.println("Switching the pump OFF");
@@ -1160,7 +1170,7 @@ void processDownlink(ostime_t txCompleteTimestamp, uint8_t fPort, uint8_t* data,
 void setup() 
 {
     Serial.print(rtc.getHours());Serial.print(":");Serial.print(rtc.getMinutes());Serial.print(":");Serial.print(rtc.getSeconds());Serial.print(" - ");
-    Serial.println("Starting a 10s delay (allowing to load new code before controller is mostly in sleep mode");
+    Serial.println("Starting a 10s delay (allowing to load new code before controller goes to sleep");
     delay(5000); 
     // boardInit(InitType::Hardware) must be called at start of setup() before anything else.
     bool hardwareInitSucceeded = boardInit(InitType::Hardware);
@@ -1201,6 +1211,7 @@ void setup()
 
     // Place code for initializing sensors etc. here.
     // scale initialisation
+
     scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
     scale.set_scale(LOADCELL_DIVIDER);
     scale.set_offset(LOADCELL_OFFSET); 

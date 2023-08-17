@@ -15,10 +15,10 @@
 #define ONE_WIRE_BUS 5
 
 // scale parameters
-#define LOADCELL_OFFSET 176100 // value deducted from the raw reading (which is also the raw reading when no load is applied to the scale)
-#define LOADCELL_DIVIDER 48  // raw reading minus offset divided by this number will give the weight applied on the scale in grams
-#define WEIGHTSLOPE -5.5 // this is the value (in grams) by which the weight measurement varies when the LC temperature increases by 1 degree C
-#define TIMECONSTANT 17 // this is the time constant of the LC mounted in its frae (see explanation is file ardbeescale.pdf, chapter "temperature compensation")
-#define T_EXT_INIT 19 // this is the external temperature at which the scale calibration was done (stabilized temperature, supposed to be also the one of the load cell)
+#define LOADCELL_OFFSET 166450 // value deducted from the raw reading (which is also the raw reading when no load is applied to the scale)
+#define LOADCELL_DIVIDER 44  // raw reading minus offset divided by this number will give the weight applied on the scale in grams
+#define WEIGHTSLOPE -0.15 // this is the value (in grams) by which the weight measurement varies when the LC temperature increases by 1 degree C
+#define TIMECONSTANT 17 // this is the time constant of the LC mounted in its fraMe (see explanation is file ardbeescale.pdf, chapter "temperature compensation")
+#define T_EXT_INIT 23 // this is the external temperature at which the scale calibration was done (stabilized temperature, supposed to be also the one of the load cell)
 
 

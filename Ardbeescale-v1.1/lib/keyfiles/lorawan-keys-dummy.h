@@ -31,18 +31,20 @@
 #define LORAWAN_KEYS_H_
 
 // Optional: If DEVICEID is defined it will be used instead of the default defined in the BSF.
-#define DEVICEID "<hso_scale01>"
+#define DEVICEID "<hso_scale06>"
 
 // Keys required for OTAA activation:
 
 // End-device Identifier (u1_t[8]) in lsb format
-#define OTAA_DEVEUI XXXXXXXXXXXXX
+// change XXXX with your own key
+#define OTAA_DEVEUI XXX
 
 // Application Identifier (u1_t[8]) in lsb format
 #define OTAA_APPEUI 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 
 // Application Key (u1_t[16]) in msb format
-#define OTAA_APPKEY XXXXXXXXXXXX
+// change XXXX with your own key
+#define OTAA_APPKEY XXX
 
 
 // -----------------------------------------------------------------------------

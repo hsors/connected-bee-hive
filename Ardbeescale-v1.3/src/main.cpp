@@ -764,9 +764,7 @@ void onEvent(ev_t ev)
                 printDownlinkInfo();
                 processDownlink(timestamp, fPort, LMIC.frame + LMIC.dataBeg, LMIC.dataLen);                
             }
-
             // HSO 09/02/2022 - once the downlink has been processed, put the controller in sleep mode
-            MyWatchDoggy.setup(0);  // disable watchdog
             Serial.print(rtc.getHours());Serial.print(":");Serial.print(rtc.getMinutes());Serial.print(":");Serial.print(rtc.getSeconds());Serial.print(" - ");
             Serial.println("Now going to sleep...");
             digitalWrite(LED_BUILTIN,LOW); // make sure built-in LED is OFF
@@ -876,9 +874,7 @@ void processWork(ostime_t doWorkJobTimeStamp)
     // This is where the main work is performed like
     // reading sensor and GPS data and schedule uplink
     // messages if anything needs to be transmitted.
-
-    MyWatchDoggy.setup(WDT_SOFTCYCLE32S);  // initialize WDT-softcounter refesh cycle on 32sec interval
- 
+    
     // Skip processWork if using OTAA and still joining.
     if (LMIC.devaddr != 0)
     {
@@ -925,6 +921,10 @@ void processWork(ostime_t doWorkJobTimeStamp)
             digitalWrite(I2CPULLUP,HIGH);
             delay(250);
 
+            MyWatchDoggy.setup(WDT_SOFTCYCLE32S);  // initialize WDT-softcounter refesh cycle on 32sec interval
+            Serial.print(rtc.getHours());Serial.print(":");Serial.print(rtc.getMinutes());Serial.print(":");Serial.print(rtc.getSeconds());Serial.print(" - ");
+            Serial.println(" Watchdog timer initiated");
+
             // read the temperature from the BME280 and convert in a float between -1 and +1
             float temperature = myBME280.readTempC();
             float newTemp = temperature; // need to keep temperature before it is coded
@@ -954,8 +954,7 @@ void processWork(ostime_t doWorkJobTimeStamp)
             float weight = scale.get_units(5);
 
             scale.power_down();
-            //
-            
+
             // below is the temperature compensation code. See explanation in file ardbeescale.docx
             int TextLength = sizeof(Text)/sizeof(Text[0]); // Text is an array (global variable) containing the last 6 external temperature measures
             for( int index = 0; index < TextLength; index = index + 1 ){ // right shift Text array by 1 and update Text[0]
@@ -1034,6 +1033,13 @@ void processWork(ostime_t doWorkJobTimeStamp)
             payloadBuffer[8] = codedInternalTemp;
 
             scheduleUplink(fPort, payloadBuffer, payloadLength);
+
+            // disable watchdog
+            Serial.print(rtc.getHours());Serial.print(":");Serial.print(rtc.getMinutes());Serial.print(":");Serial.print(rtc.getSeconds());Serial.print(" - ");
+            Serial.println(" Watchdog timer disabled");
+            MyWatchDoggy.setup(0);
+
+
             
         }
     }
@@ -1087,12 +1093,7 @@ void processDownlink(ostime_t txCompleteTimestamp, uint8_t fPort, uint8_t* data,
             Serial.print(rtc.getHours());Serial.print(":");Serial.print(rtc.getMinutes());Serial.print(":");Serial.print(rtc.getSeconds());Serial.print(" - ");
             serial.print("Switching the pump to ON for ");serial.print(pumpOnDuration);serial.println("s ");
             digitalWrite(GPIOPUMP, HIGH);
-            int splittedPumpDuration=pumpOnDuration/30; // the watchdog timer will cleared 30 times during pumping because pumping may last 630s
-            unsigned int t = 0;
-            for (t = 1; t < 30; ++t) {
-                delay(1000*splittedPumpDuration);
-                MyWatchDoggy.clear();
-                }
+            delay(1000*pumpOnDuration);
             digitalWrite(GPIOPUMP, LOW);
             Serial.print(rtc.getHours());Serial.print(":");Serial.print(rtc.getMinutes());Serial.print(":");Serial.print(rtc.getSeconds());Serial.print(" - ");
             serial.println("Switching the pump OFF");
@@ -1226,11 +1227,9 @@ void setup()
     rtc.setDate(day, month, year); // same
 
     // Initialise BME280 
-    Serial.println("Reading basic values from BME280");
-
     Wire.begin();
     delay(10); // wait at least 2ms before taking any reading
-    Serial.println("I2C address setting");
+    Serial.println("BME280 I2C address setting");
     myBME280.setI2CAddress(0x76);
     delay(10);
     if (myBME280.beginI2C() == false) //Begin communication over I2C
